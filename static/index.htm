@@ -5,6 +5,14 @@
     <script src="https://d3js.org/topojson.v2.min.js"></script>
 
     <style>
+        img{
+            display: block;
+            width: 15%;
+            margin-left: auto;
+            margin-right: auto;
+            
+        }
+        
         #title{
             text-align: center;
         }
@@ -37,6 +45,9 @@
 
 
 <body>
+    <!--Image Source: https://www.publicdomainpictures.net/en/view-image.php?image=24285&picture=olympic-rings-on-white-->
+    
+    <img src = rings.png alt = rings> 
     <h1 id = title> Total Olympic Medals by Country 1896-2016 </h1>
     <p id = blurb> The chart below shows how many medals were recieved by atheltes from each country. Since medals are counted per athlete, a medal is counted for each individual athlete that medaled in a team sport. 
         Use the selectors below to filter the data, and hover over a bar to see information about the top three winningest athletes from each country . </p>
@@ -291,7 +302,9 @@
                 
                 d3.select(this)
                     .transition().duration(200)
-                    .attr("fill", "green");
+                    .attr("fill", "green")
+                    .attr("stroke", "darkgreen")
+                    .attr("stroke-width", "3px");
 
             list2 = []
             countries.get(countryLabel).forEach( d=> {
@@ -367,7 +380,8 @@
            
             d3.select(this)
                 .transition().duration(200)
-                .attr("fill", colorScale(this.getAttribute("country_label")));
+                .attr("fill", colorScale(this.getAttribute("country_label")))
+                .attr("stroke", "none");
             
             background.attr("fill", "none")
                 .attr("stroke", "none");
