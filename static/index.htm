@@ -1,0 +1,398 @@
+<html>
+<head>
+    <title> Daniel Sanderson HW 2 </title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script src="https://d3js.org/topojson.v2.min.js"></script>
+
+    <style>
+        #title{
+            text-align: center;
+        }
+
+        #blurb{
+            text-align: center;
+            margin-left: 15%;
+            margin-right: 15%;
+        }
+        #selectors{
+            text-align: center;
+            margin-top: 20px;
+        }
+        #source{
+            text-align: center;
+        }
+        .gridlines line{
+            stroke: lightgray;
+            opacity: 5;
+        
+        }
+
+        svg{
+            margin-left: 50px;
+        }
+    </style>
+    
+
+</head>
+
+
+<body>
+    <h1 id = title> Total Olympic Medals by Country 1896-2016 </h1>
+    <p id = blurb> The chart below shows how many medals were recieved by atheltes from each country. Since medals are counted per athlete, a medal is counted for each individual athlete that medaled in a team sport. 
+        Use the selectors below to filter the data, and hover over a bar to see information about the top three winningest athletes from each country . </p>
+    <div id = selectors>
+
+        <label for = season> Season:</label>
+        <select name="season" id = "season" onchange = "changeSeason();" >
+            <option value= 0 selected>All</option>
+            <option value= 1 >Summer</option>
+            <option value= 2 >Winter</option>
+          </select>
+
+          <label for = sex> Sex:</label>
+          <select name="sex" id = "sex" onchange = "changeSex();">
+            <option value= 0 selected>All</option>
+            <option value= 1>Male</option>
+            <option value= 2 >Female</option>
+          </select>
+
+    </div>
+    <svg height = 500 width = 1000 id = hw2>
+        
+    </svg>
+    <!--Data source: https://www.kaggle.com/heesoo37/120-years-of-olympic-history-athletes-and-results -->
+    <p id = source> Data Source: <a href = https://www.kaggle.com/heesoo37/120-years-of-olympic-history-athletes-and-results> Kaggle </a> </p>
+
+    <script>
+
+        const svg = d3.select("#hw2");
+        const width = svg.attr("width");
+        const height = svg.attr("height");
+        const margins = {top: 10, right: 10, bottom: 50, left: 50};
+  
+        const barsWidth = width - margins.left - margins.right;
+        const barsHeight = height - margins.top - margins.bottom;
+
+        const lines = svg.append("g")
+                        .attr("id", "lines")
+        const bars = svg.append("g")
+                        .attr("transform","translate("+margins.left+","+margins.top+")");
+        const background = svg.append("rect")
+                                .attr("x", 470)
+                                .attr("y", 60)
+                                .attr("width", 520)
+                                .attr("height", 120)
+                                .attr("fill", "none");
+        const top3_title = svg.append("text")
+                                .attr("y", 80)
+                                .attr('x', 480);
+        const top3_guide = svg.append("text")
+                                .attr("y", 95)
+                                .attr('x', 480);
+        const top3_one = svg.append("text")
+                                .attr("y", 120)
+                                .attr('x', 480);
+        const top3_two = svg.append("text")
+                                .attr("y", 145)
+                                .attr('x', 480);
+        const top3_three = svg.append("text")
+                                .attr("y", 170)
+                                .attr('x', 480);
+
+
+        
+
+        //code help source: W3 Schools: https://www.w3schools.com/jsref/event_onchange.asp
+        // And Mozilla: https://developer.mozilla.org/en-US/docs/Web/API/Document/getElementById
+        let season = 0
+        function changeSeason(){
+            season = Number(document.getElementById("season").value)
+            document.getElementById("lines").innerHTML = "";
+            requestData()
+        }
+        
+        let sex = 0
+        function changeSex(){
+            sex = Number(document.getElementById("sex").value)
+            document.getElementById("lines").innerHTML = "";
+            requestData()
+        }
+
+
+
+        const requestData = async function() {
+
+        
+            // processing data
+            const data = await d3.csv("aggregated_athlete_events.csv", d3.autoType());
+           
+            data.forEach( d =>{
+                if(d.Team.indexOf("-") > -1){
+                    d.Team = d.Team.substr(0, d.Team.indexOf("-") )
+                }
+                if (d.Team == "Soviet Union"){
+                    d.Team = "Russia"
+                }
+                if (d.Team == "Unified Team"){
+                    d.Team = "Russia"
+                }
+                if (d.Team == "East Germany"){
+                    d.Team = "Germany"
+                }
+                if (d.Team == "West Germany"){
+                    d.Team = "Germany"
+                }
+                if (d.Team == "Scotland"){
+                    d.Team = "Great Britain"
+                }
+                if (d.Team == "Ireland"){
+                    d.Team = "Great Britain"
+                }
+
+              
+            })
+            
+
+            var countries = d3.group(data, d => d.Team) 
+          
+            
+            let seasons = ["Summer", "Winter"]
+            let sexes = ["M", "F"]
+
+            my_list = []
+
+        
+            countries.forEach( country => {
+                
+                let temp_sum = 0
+
+                    country.forEach (d => {
+                    
+                    if (season == 0 && sex == 0){
+                        temp_sum += Number(d.Medal_count)
+                    }
+                    else if (sex == 0){
+                        if (d.Season == seasons[(season-1)]){
+                            temp_sum += Number(d.Medal_count)
+                        }
+                    }
+                    else if (season == 0){
+                        if (d.Sex == sexes[(sex-1)]){
+                            temp_sum += Number(d.Medal_count)
+                        }
+                    }
+                    else {
+                        if (d.Sex == sexes[(sex-1)] && d.Season == seasons[(season-1)] ){
+                            temp_sum += Number(d.Medal_count)
+                        }
+
+                    }
+                    
+            })
+       
+                my_list.push([country[0].Team, temp_sum] )
+            })
+   
+            
+
+            my_list.sort(function(a, b) {
+                    return b[1] - a[1];
+            });
+         
+            my_list = my_list.slice(0,15)
+
+            countries_list = []
+            my_list.forEach(d =>{
+                countries_list.push(d[0])
+          
+            })
+       
+            
+
+            //adding chart
+
+            var yExtent = d3.extent(my_list, d => d[1]);
+            
+
+            var xRange = [];
+            
+            for(i = 25; i< 950; i += 63){
+                xRange.push(i)
+            }
+
+            let xScale = d3.scaleOrdinal()
+                            .domain(countries_list)
+                            .range(xRange);
+            
+            let colorScale = d3.scaleOrdinal()
+                            .domain(countries_list)
+                            .range(["gold", 'silver', 
+                            '#cd7f32', '#0085C7', '#0085C7', '#0085C7','#0085C7','#0085C7','#0085C7','#0085C7','#0085C7','#0085C7','#0085C7','#0085C7','#0085C7','#0085C7']);
+
+            let yScale = d3.scaleLinear()
+                            //.domain([0, 18000])
+                            .domain([0, yExtent[1]])
+                            .range([450,30]);
+
+            let xAxis = d3.axisBottom(xScale)
+                        .ticks();
+
+            let yAxis = d3.axisLeft(yScale)
+                        .ticks();
+            let yGridlines = d3.axisLeft(yScale)
+                          .tickSize(-barsWidth-10)
+                          .tickFormat("")
+
+            
+            
+            lines.append("g")
+            .attr("transform","translate("+margins.left+","+(barsHeight+margins.top+10)+")")
+            .call(xAxis)
+
+            lines.append("g")
+            .attr("transform","translate("+(margins.left-10)+","+margins.top+")")
+            .call(yAxis)
+
+            lines.append("g")
+            .attr("class", "gridlines")
+            .attr("transform","translate("+(margins.left-10)+","+margins.top+")")
+            .call(yGridlines)
+
+
+            
+            bars.selectAll("rect")
+                .data(my_list)
+                .join("rect")
+                .attr("x", d=> xScale(d[0]) - 25)
+                .attr("y", d=> yScale(d[1])+ margins.top)
+                .attr('height', d => barsHeight - yScale(d[1]) )
+                .attr("width", 50)
+                .attr("fill", d=> colorScale(d[0]))
+                .attr("country_label", d => d[0])
+           
+            bars.selectAll("text")
+                .data(my_list)
+                .join("text")
+                .text(d=> String(d[1]))
+                .attr("x", d=> xScale(d[0])-16 )
+                .attr("y", d=> yScale(d[1])+27)
+                
+            
+
+            
+
+            
+            
+            // showing values for country   
+            
+            bars.selectAll("rect").on("mouseover", function(){
+
+                let countryLabel = this.getAttribute("country_label")
+                
+                d3.select(this)
+                    .transition().duration(200)
+                    .attr("fill", "green");
+
+            list2 = []
+            countries.get(countryLabel).forEach( d=> {
+                temp = Object()
+                temp.ID = d.ID
+                temp.Name = d.Name
+                temp.Sport = d.Sport
+                temp.Medal_count = d.Medal_count
+                temp.Season = d.Season
+                temp.Sex = d.Sex
+                list2.push(temp)
+                
+            })
+            list3 = d3.group(list2, d=> d.ID)
+       
+            final_list = []
+            list3.forEach( athlete =>{
+                medals = 0
+                name_ = athlete[0].Name
+                if(name_.indexOf("(") > -1){
+                    name_ = name_.substr(0, name_.indexOf("(") )
+                }
+                sport_ = athlete[0].Sport
+                athlete.forEach( d=>{
+                    medals += Number(d.Medal_count)
+                })
+                if(sex == 0 && season == 0){
+                final_list.push([name_, sport_, medals])
+                }
+                else if(sex == 0){
+                    if (athlete[0].Season == seasons[season-1]){
+                        final_list.push([name_, sport_, medals])
+                    }
+                }
+                else if(season == 0){
+                    if (athlete[0].Sex == sexes[sex-1]){
+                        final_list.push([name_, sport_, medals])
+                    }
+                }
+                else{
+                    if (athlete[0].Sex == sexes[sex-1] && athlete[0].Season == seasons[season-1]){
+                        final_list.push([name_, sport_, medals])
+                    }
+            
+            }})
+
+            final_list.sort(function(a, b) {
+                    return b[2] - a[2];
+            });
+            
+            background.attr("fill", "white")
+                .attr("stroke", "black");
+
+            top3_title.text("Athletes With the Most Medals From " + countryLabel)
+                .attr("font-weight", "bold");
+
+            top3_guide.text("(Name - Sport - Medals)")
+                .attr("font-size", "small");
+            
+            top3_one.text(final_list[0][0] +" - " + final_list[0][1] + ' - ' +  final_list[0][2] + " medals")
+            top3_two.text(final_list[1][0] +" - " + final_list[1][1] + ' - ' +  final_list[1][2] + " medals")
+            top3_three.text(final_list[2][0] +" - " + final_list[2][1] + ' - ' +  final_list[2][2] + " medals")
+
+
+            
+        
+                
+
+        })
+
+
+        bars.selectAll("rect").on("mouseout", function(){
+           
+            d3.select(this)
+                .transition().duration(200)
+                .attr("fill", colorScale(this.getAttribute("country_label")));
+            
+            background.attr("fill", "none")
+                .attr("stroke", "none");
+
+            top3_title.text("");
+        
+
+            top3_guide.text("");
+            
+            top3_one.text("");
+            top3_two.text("");
+            top3_three.text("");
+
+
+        })
+            
+
+
+        };
+
+        requestData();
+
+    </script>
+
+    
+
+</body>
+</html>
